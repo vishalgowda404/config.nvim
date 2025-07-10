@@ -4,6 +4,9 @@
 -- See the kickstart.nvim README for more information
 return {
   {
+    'rose-pine/neovim',
+  },
+  {
     'stevearc/oil.nvim',
     config = function()
       require('oil').setup()

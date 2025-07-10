@@ -152,7 +152,7 @@ vim.opt.inccommand = 'split'
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 10
+vim.opt.scrolloff = 30
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -386,6 +386,18 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<leader>s"', function()
+        require('telescope.builtin').live_grep {
+          prompt_title = 'Grep Notes',
+          cwd = vim.fn.expand '~/notes',
+        }
+      end, { noremap = true, silent = true, desc = 'Fuzzy grep in ~/notes' })
+      vim.keymap.set('n', "<leader>s'", function()
+        require('telescope.builtin').find_files {
+          prompt_title = 'List Notes',
+          cwd = vim.fn.expand '~/notes',
+        }
+      end, { noremap = true, silent = true, desc = 'List files in ~/notes' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -571,7 +583,6 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        -- pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -623,6 +634,7 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
+        automatic_enable = false,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
@@ -656,8 +668,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        -- local disable_filetypes = { c = true, cpp = true, htmldjango = true, html = true }
-        local disable_filetypes = {}
+        local disable_filetypes = { tsx = true }
         return {
           timeout_ms = 500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
@@ -666,7 +677,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'ruff' },
         --
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
@@ -791,15 +802,92 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
+    'rose-pine/neovim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
-    init = function()
+    config = function()
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      require('rose-pine').setup {
+        variant = 'auto', -- auto, main, moon, or dawn
+        dark_variant = 'main', -- main, moon, or dawn
+        dim_inactive_windows = false,
+        extend_background_behind_borders = true,
 
+        enable = {
+          terminal = true,
+          legacy_highlights = true, -- Improve compatibility for previous versions of Neovim
+          migrations = true, -- Handle deprecated options automatically
+        },
+
+        styles = {
+          bold = true,
+          italic = true,
+          transparency = false,
+        },
+
+        groups = {
+          border = 'muted',
+          link = 'iris',
+          panel = 'surface',
+
+          error = 'love',
+          hint = 'iris',
+          info = 'foam',
+          note = 'pine',
+          todo = 'rose',
+          warn = 'gold',
+
+          git_add = 'foam',
+          git_change = 'rose',
+          git_delete = 'love',
+          git_dirty = 'rose',
+          git_ignore = 'muted',
+          git_merge = 'iris',
+          git_rename = 'pine',
+          git_stage = 'iris',
+          git_text = 'rose',
+          git_untracked = 'subtle',
+
+          h1 = 'iris',
+          h2 = 'foam',
+          h3 = 'rose',
+          h4 = 'gold',
+          h5 = 'pine',
+          h6 = 'foam',
+        },
+
+        palette = {
+          -- Override the builtin palette per variant
+          -- moon = {
+          --     base = '#18191a',
+          --     overlay = '#363738',
+          -- },
+        },
+
+        highlight_groups = {
+          -- Comment = { fg = "foam" },
+          -- VertSplit = { fg = "muted", bg = "muted" },
+        },
+
+        before_highlight = function(group, highlight, palette)
+          -- Disable all undercurls
+          -- if highlight.undercurl then
+          --     highlight.undercurl = false
+          -- end
+          --
+          -- Change palette colour
+          -- if highlight.fg == palette.pine then
+          --     highlight.fg = palette.foam
+          -- end
+        end,
+      }
+      vim.cmd 'colorscheme vim'
+      -- vim.cmd("colorscheme rose-pine-main")
+      -- vim.cmd("colorscheme rose-pine-moon")
+      -- vim.cmd("colorscheme rose-pine-dawn")
       -- You can configure highlights by doing something like:
+      -- turn background to black
       vim.cmd.hi 'Comment gui=none'
     end,
   },
@@ -859,6 +947,7 @@ require('lazy').setup({
         additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
+      fold = { enable = true },
     },
     config = function(_, opts)
       -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
@@ -933,8 +1022,46 @@ lspconfig.emmet_language_server.setup {
   filetypes = { 'html', 'templ', 'jsx', 'tsx' },
 }
 
+lspconfig.ruff.setup {
+  cmd = { 'ruff', 'server' }, -- explicit if auto-detect fails
+  filetypes = { 'python', 'django' }, -- adjust to your needs
+  init_options = {
+    settings = {
+      -- Here you can set any of the new native-server options:
+      lint = {
+        select = { 'F' }, -- e.g., undefined names & unused variables
+      },
+      format = {
+        preview = true, -- enable format preview before apply
+      },
+      configurationPreference = 'filesystemFirst',
+    },
+  },
+}
+
+lspconfig.pyright.setup {
+  on_attach = function(client, bufnr)
+    -- Optional: disable Pyright’s diagnostics/formatting if you want Ruff to own those
+    client.server_capabilities.diagnosticProvider = false
+    client.server_capabilities.documentFormattingProvider = false
+  end,
+}
+
 -- User defined keymaps
 vim.keymap.set('n', '<leader>tt', ':tabnew<CR>')
 vim.keymap.set('n', '<leader>tn', ':tabnext<CR>')
 vim.keymap.set('n', '<leader>tp', ':tabprevious<CR>')
 vim.keymap.set('n', '<leader>tc', ':tabclose<CR>')
+-- greatest remap ever
+vim.keymap.set('x', '<leader>p', [["_dP]])
+vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]])
+vim.cmd 'colorscheme rose-pine'
+
+-- Turn off lsp logs
+vim.lsp.set_log_level 'off'
+
+-- Cursor style configuration
+vim.opt.guicursor = 'n-v-c-i:block-Cursor'
+-- require 'custom.set'
+-- require 'custom.remap'
+require 'custom'
