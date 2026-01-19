@@ -1044,6 +1044,8 @@ lspconfig.pyright.setup {
     -- Optional: disable Pyright’s diagnostics/formatting if you want Ruff to own those
     client.server_capabilities.diagnosticProvider = false
     client.server_capabilities.documentFormattingProvider = false
+    -- disable linting
+    client.server_capabilities.semanticTokensProvider = false
   end,
 }
 
@@ -1065,3 +1067,75 @@ vim.opt.guicursor = 'n-v-c-i:block-Cursor'
 -- require 'custom.set'
 -- require 'custom.remap'
 require 'custom'
+
+vim.lsp.config('jsonls', {
+  cmd = { 'vscode-json-languageserver', '--stdio' }, -- Command to start the server.
+  filetypes = { 'json', 'jsonc' }, -- Filetypes to associate with the server.
+  settings = {
+    json = {
+      -- Configure formatting options here.
+      format = {
+        enable = true, -- Enable formatting.
+        keepLines = false, -- Whether to keep lines with syntax errors.
+        indentWithTabs = false, -- Use spaces for indentation.
+        tabSize = 2, --  Set tab size for formatting.
+        insertSpaces = true, --  Insert spaces for tabs.
+        detectIndentation = false, -- Disable indentation detection.
+      },
+      schemas = {
+        -- Define JSON schema associations here for validation and completion.
+        -- Example: {"file:///path/to/my-schema.json", "file.json"},
+      },
+    },
+  },
+})
+
+vim.lsp.config('ts_ls', {
+  cmd = { 'typescript-language-server', '--stdio' }, -- Command to start the LSP
+  filetypes = { 'typescript', 'typescriptreact', 'typescript.tsx', 'javascript', 'javascriptreact', 'javascript.jsx' },
+  root_dir = require('lspconfig.util').root_pattern('package.json', 'tsconfig.json', 'jsconfig.json', '.git'),
+  settings = {
+    typescript = {
+      format = {
+        indentSize = 2,
+        convertTabsToSpaces = true,
+        semicolons = 'insert', -- options: "insert", "remove", "ignore"
+      },
+      inlayHints = {
+        includeInlayParameterNameHints = 'all',
+        includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+        includeInlayFunctionParameterTypeHints = true,
+        includeInlayVariableTypeHints = true,
+        includeInlayPropertyDeclarationTypeHints = true,
+        includeInlayFunctionLikeReturnTypeHints = true,
+        includeInlayEnumMemberValueHints = true,
+      },
+    },
+    javascript = {
+      format = {
+        indentSize = 2,
+        convertTabsToSpaces = true,
+        semicolons = 'insert',
+      },
+      inlayHints = {
+        includeInlayParameterNameHints = 'all',
+        includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+        includeInlayFunctionParameterTypeHints = true,
+        includeInlayVariableTypeHints = true,
+        includeInlayPropertyDeclarationTypeHints = true,
+        includeInlayFunctionLikeReturnTypeHints = true,
+        includeInlayEnumMemberValueHints = true,
+      },
+    },
+  },
+  on_attach = function(client, bufnr)
+    -- Example keymaps for LSP features
+    local bufopts = { noremap = true, silent = true, buffer = bufnr }
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
+    vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
+    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
+    vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, bufopts)
+    vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, bufopts)
+  end,
+  capabilities = require('cmp_nvim_lsp').default_capabilities(),
+})

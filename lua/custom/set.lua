@@ -1,3 +1,4 @@
+vim.g.gui_font_default_size = 20
 vim.opt.guicursor = ''
 
 vim.opt.nu = true
